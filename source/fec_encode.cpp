@@ -19,9 +19,9 @@ FecEncode::FecEncode(const int32_t &data_pkg_num, const int32_t &redundant_pkg_n
     if (ret < 0) {
         seq = 0;
     }
-    data_pkgs_length_.resize(data_pkg_num+redundant_pkg_num);
+    data_pkgs_length_.resize(data_pkg_num + redundant_pkg_num);
     data_pkgs_.resize(data_pkg_num + redundant_pkg_num);
-    for(char *pkg : data_pkgs_){
+    for (char *pkg : data_pkgs_) {
         pkg = nullptr;
     }
 }
@@ -37,15 +37,16 @@ int32_t FecEncode::Input(char *input_data_pkg, int32_t length) {
         max_data_pkg_length_ = 0;
         ResetDataPkgs();
     }
-    length += fec_encode_head_length_;
+    ///因为实际上我们添加的fec头部是进入fec编码的
     max_data_pkg_length_ = std::max(length, static_cast<int32_t >(max_data_pkg_length_));
+    length += fec_encode_head_length_;
     data_pkgs_[cur_data_pkgs_num_] = (char *) malloc((length + 1) * sizeof(char));
     data_pkgs_length_[cur_data_pkgs_num_] = length;
     bzero(data_pkgs_[cur_data_pkgs_num_], length + 1);
     write_u32(data_pkgs_[cur_data_pkgs_num_], seq);
-    data_pkgs_[cur_data_pkgs_num_][4] = (unsigned char)data_pkg_num_;
-    data_pkgs_[cur_data_pkgs_num_][5] = (unsigned char)redundant_pkg_num_;
-    data_pkgs_[cur_data_pkgs_num_][6] = (unsigned char)cur_data_pkgs_num_;
+    data_pkgs_[cur_data_pkgs_num_][4] = (unsigned char) data_pkg_num_;
+    data_pkgs_[cur_data_pkgs_num_][5] = (unsigned char) redundant_pkg_num_;
+    data_pkgs_[cur_data_pkgs_num_][6] = (unsigned char) cur_data_pkgs_num_;
     memcpy(data_pkgs_[cur_data_pkgs_num_] + fec_encode_head_length_, input_data_pkg, length - fec_encode_head_length_);
     cur_data_pkgs_num_++;
     if (cur_data_pkgs_num_ == data_pkg_num_) {
@@ -57,14 +58,21 @@ int32_t FecEncode::Input(char *input_data_pkg, int32_t length) {
             } else {
                 data[i] = (char *) malloc((max_data_pkg_length_ + 1) * sizeof(char));
                 bzero(data[i], (max_data_pkg_length_ + 1) * sizeof(char));
+                write_u32(data[i], seq);
+                data[i][4] = (unsigned char) data_pkg_num_;
+                data[i][5] = (unsigned char) redundant_pkg_num_;
+                data[i][6] = (unsigned char) i;
             }
+            ///因为实际上我们添加的fec头部是不进入fec编码的
+            data[i] += fec_encode_head_length_;
         }
         rs_encode2(data_pkg_num_, data_pkg_num_ + redundant_pkg_num_, data, max_data_pkg_length_);
         for (int32_t i = 0; i < data_pkg_num_ + redundant_pkg_num_; ++i) {
+            data[i] -= fec_encode_head_length_;
             data_pkgs_[i] = data[i];
         }
-        for(int32_t i = data_pkg_num_; i < data_pkg_num_ + redundant_pkg_num_; ++i){
-            data_pkgs_length_[i] = max_data_pkg_length_;
+        for (int32_t i = data_pkg_num_; i < data_pkg_num_ + redundant_pkg_num_; ++i) {
+            data_pkgs_length_[i] = max_data_pkg_length_+7;
         }
         free(data);
         ready_for_fec_output_ = true;
@@ -74,7 +82,7 @@ int32_t FecEncode::Input(char *input_data_pkg, int32_t length) {
     return 0;
 }
 
-int32_t FecEncode::Output(std::vector<char *> &data_pkgs, std::vector<int32_t>& data_pkgs_length) {
+int32_t FecEncode::Output(std::vector<char *> &data_pkgs, std::vector<int32_t> &data_pkgs_length) {
     if (!ready_for_fec_output_) {
         return -1;
     }
@@ -85,7 +93,7 @@ int32_t FecEncode::Output(std::vector<char *> &data_pkgs, std::vector<int32_t>& 
 }
 
 void FecEncode::ResetDataPkgs() {
-    for(auto& data_pkg_length : data_pkgs_length_)
+    for (auto &data_pkg_length : data_pkgs_length_)
         data_pkg_length = 0;
     for (char *data_pkg : data_pkgs_) {
         free(data_pkg);
