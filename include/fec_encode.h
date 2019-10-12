@@ -15,14 +15,16 @@
 class FecEncode{
  public:
   FecEncode(const int32_t& data_pkg_num, const int32_t& redundant_pkg_num);
+  ~FecEncode();
   int32_t Input(char* input_data_pkg, int32_t length);
-  int32_t Output(std::vector<char*>& data_pkgs);
+  int32_t Output(std::vector<char*>& data_pkgs, std::vector<int32_t>& data_pkg_length_);
  private:
-  void FreeDataPkgs();
+  void ResetDataPkgs();
  private:
   std::atomic_int cur_data_pkgs_num_;
   std::atomic_int max_data_pkg_length_;
   std::vector<char *> data_pkgs_;
+  std::vector<int32_t > data_pkgs_length_;
   std::mutex data_pkgs_mutex_;
   std::atomic_bool ready_for_fec_output_;
   int32_t data_pkg_num_;

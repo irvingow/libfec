@@ -27,35 +27,43 @@ int test() {
             break;
         }
     }
-    std::vector<char*> res;
-    ret = fec_encode.Output(res);
-    if(ret != 0){
-        LOG(ERROR)<<"failed to get fec_encoded data";
+    std::vector<char *> res;
+    std::vector<int32_t> res_length;
+    ret = fec_encode.Output(res, res_length);
+    if (ret != 0) {
+        LOG(ERROR) << "failed to get fec_encoded data";
         return -1;
     }
 //    rs_encode2(10, 15, data, 9);
     printf("++++++++encoded data start++++++++++++\n");
     for (i = 0; i < 15; i++) {
         ///加7是为了跳过fec所加的包头
-        printf("<%s>\n", res[i]+7);
+        printf("<%s>\n", res[i] + 7);
     }
     printf("++++++++encoded data end++++++++++++\n");
 
     char *data[15];
-    for(int i = 0; i < 15; ++i){
-        data[i] = res[i];
+    for (i = 0; i < 15; ++i) {
+        data[i] = (char *) malloc((res_length[i] + 1) * sizeof(char));
+        bzero(data[i], (res_length[i] + 1) * sizeof(char));
+        memcpy(data[i], res[i], res_length[i]);
     }
     printf("@@@@@@@@trans data start@@@@@@@@@@@@\n");
-    data[0] = NULL;
-    data[1] = NULL;
-    data[2] = NULL;
-    data[10] = NULL;
-    data[12] = NULL;
+    free(data[0]);
+    data[0] = nullptr;
+    free(data[1]);
+    data[1] = nullptr;
+    free(data[2]);
+    data[2] = nullptr;
+    free(data[10]);
+    data[10] = nullptr;
+    free(data[12]);
+    data[12] = nullptr;
     for (i = 0; i < 15; i++) {
-        if(data[i] == nullptr)
+        if (data[i] == nullptr)
             continue;
         ///加7是为了跳过fec所加的包头
-        printf("<%s>\n", data[i]+7);
+        printf("<%s>\n", data[i] + 7);
     }
     printf("@@@@@@@@trans data end@@@@@@@@@@@@@\n");
 
@@ -65,16 +73,16 @@ int test() {
 
     printf("########decoder data start##########\n");
     for (i = 0; i < 15; i++) {
-        if(data[i] == nullptr)
+        if (data[i] == nullptr)
             continue;
         ///加7是为了跳过fec所加的包头
-        printf("<%s>\n", data[i]+7);
+        printf("<%s>\n", data[i] + 7);
     }
     printf("########decoder data end##########\n");
     printf("########res data start##########\n");
     for (i = 0; i < 15; i++) {
         ///加7是为了跳过fec所加的包头
-        printf("<%s>\n", res[i]+7);
+        printf("<%s>\n", res[i] + 7);
     }
     printf("########res data end##########\n");
     return 0;
