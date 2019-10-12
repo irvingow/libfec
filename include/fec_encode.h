@@ -17,6 +17,7 @@ class FecEncode{
   FecEncode(const int32_t& data_pkg_num, const int32_t& redundant_pkg_num);
   ~FecEncode();
   int32_t Input(char* input_data_pkg, int32_t length);
+  ///调用者必须手动从出参中复制数据,并不能直接使用返回的指针
   int32_t Output(std::vector<char*>& data_pkgs, std::vector<int32_t>& data_pkg_length_);
  private:
   void ResetDataPkgs();
