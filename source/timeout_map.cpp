@@ -56,8 +56,6 @@ TimeOutMap::GetTimeOutElements(const int64_t &cur_time_ms) {
                 break;
         }
     }
-    for (const auto &timeout_element : timeout_elements)
-        Remove(timeout_element);
     return timeout_elements;
 }
 
