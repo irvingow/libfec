@@ -20,6 +20,10 @@ int32_t FecDecode::Input(char *input_data_pkg, int32_t length) {
     if (index >= (data_pkg_num + redundant_pkg_num))
         return -1;
     length -= fec_encode_head_length_;
+    ///下面这种情况说明实际上对应seq的所有数据已经解码完成同时已经被输出过了,所以直接返回0就好
+    if (seq2data_pkgs_.count(seq))
+        if (!seq2ready_for_output_[seq] && seq2cur_recv_data_pkg_num_[seq] >= seq2data_pkgs_num_[seq])
+            return 0;
     if (seq2ready_for_output_[seq])
         return 1;
     char *data = (char *) malloc((length + 1));
@@ -67,7 +71,7 @@ int32_t FecDecode::Input(char *input_data_pkg, int32_t length) {
         ready_seqs_nums_++;
         return 1;
     }
-    if(seq2data_pkgs_.size() > 50)
+    if (seq2data_pkgs_.size() > 50)
         ClearTimeoutDatas();
     return 0;
 }
