@@ -3,8 +3,9 @@
 //
 #include <glog/logging.h>
 #include "fec_encode.h"
+#include "fec_decode.h"
 
-int test() {
+int unit_test() {
     FecEncode fec_encode(10, 5);
     int i;
     char arr[15][100] =
@@ -57,40 +58,63 @@ int test() {
     data[2] = nullptr;
     free(data[10]);
     data[10] = nullptr;
-    free(data[12]);
-    data[12] = nullptr;
     for (i = 0; i < 15; i++) {
-        if (data[i] == nullptr)
+        if (data[i] == nullptr){
+            printf("<nullptr>\n");
             continue;
+        }
         ///加7是为了跳过fec所加的包头
         printf("<%s>\n", data[i] + 7);
     }
     printf("@@@@@@@@trans data end@@@@@@@@@@@@@\n");
 
-    ///注意这里的size必须是16,因为数据包大小是9而fec的包头大小是7
-    ret = rs_decode2(10, 15, data, 16);
-    printf("ret:%d\n", ret);
+    FecDecode fec_decoder(2000);
+    for(int32_t i =0;  i < 15; ++i){
+        if(data[i] == nullptr)
+            continue;
+        ret = fec_decoder.Input(data[i], 16);
+        if(ret == 1){
+            LOG(INFO)<<"data pkg number is enough for output i:"<<i;
+        }
+    }
+
+    std::vector<char*> decode_data_pkgs;
+    std::vector<int32_t > decode_data_pkgs_length;
+    ret = fec_decoder.Output(decode_data_pkgs, decode_data_pkgs_length);
+    if(ret < 0){
+        LOG(ERROR)<<"cannot get decoded data";
+        return -1;
+    }
+    if(ret > 0){
+        LOG(INFO)<<"more decoded data is ready for output in decoder ret:"<<ret;
+    }
+    for(i = 0; i < 15; ++i){
+        free(data[i]);
+        if(i < 10){
+            data[i] = (char *) malloc((decode_data_pkgs_length[i] + 1) * sizeof(char));
+            bzero(data[i], (decode_data_pkgs_length[i] + 1) * sizeof(char));
+            memcpy(data[i], decode_data_pkgs[i], decode_data_pkgs_length[i]);
+        } else
+            data[i] = nullptr;
+    }
+
+//    注意这里的size必须是16,因为数据包大小是9而fec的包头大小是7
+//    ret = rs_decode2(10, 15, data, 16);
+//    printf("ret:%d\n", ret);
 
     printf("########decoder data start##########\n");
     for (i = 0; i < 15; i++) {
         if (data[i] == nullptr)
             continue;
-        ///加7是为了跳过fec所加的包头
-        printf("<%s>\n", data[i] + 7);
+        printf("<%s>\n", data[i]);
     }
     printf("########decoder data end##########\n");
-    printf("########res data start##########\n");
-    for (i = 0; i < 15; i++) {
-        ///加7是为了跳过fec所加的包头
-        printf("<%s>\n", res[i] + 7);
-    }
-    printf("########res data end##########\n");
     return 0;
 }
 
 int main(int argc, const char *argv[]) {
     google::InitGoogleLogging("INFO");
     FLAGS_logtostderr = true;
-    test();
+    unit_test();
     return 0;
 }

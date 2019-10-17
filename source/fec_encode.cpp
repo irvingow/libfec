@@ -37,7 +37,7 @@ int32_t FecEncode::Input(char *input_data_pkg, int32_t length) {
         max_data_pkg_length_ = 0;
         ResetDataPkgs();
     }
-    ///因为实际上我们添加的fec头部是进入fec编码的
+    ///因为实际上我们添加的fec头部是不进入fec编码的
     max_data_pkg_length_ = std::max(length, static_cast<int32_t >(max_data_pkg_length_));
     length += fec_encode_head_length_;
     data_pkgs_[cur_data_pkgs_num_] = (char *) malloc((length + 1) * sizeof(char));
