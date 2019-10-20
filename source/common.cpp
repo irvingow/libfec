@@ -2,6 +2,8 @@
 // Created by lwj on 2019/10/16.
 //
 #include "common.h"
+#include <iostream>
+#include <cstring>
 
 void write_u32(char * p,uint32_t l)
 {
@@ -24,4 +26,14 @@ int64_t getnowtime_ms(){
     struct timeval tv;
     gettimeofday(&tv, NULL);
     return tv.tv_sec + tv.tv_usec / 1000;
+}
+
+void print_char_array_in_byte(char *buf) {
+    const int32_t size = sizeof(buf);
+    for (int32_t i = 0; i < strlen(buf); i++) {
+        if (i > 0)
+            printf(":");
+        printf("%02X", buf[i]);
+    }
+    printf("\n");
 }

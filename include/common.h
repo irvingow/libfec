@@ -15,4 +15,6 @@ uint32_t read_u32(char * p);
 
 int64_t getnowtime_ms();
 
+void print_char_array_in_byte(char *buf) ;
+
 #endif //LIBFEC_COMMON_H
