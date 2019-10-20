@@ -54,6 +54,7 @@ int32_t FecEncode::Input(char *input_data_pkg, int32_t length) {
         char **data = nullptr;
         data = (char **) malloc((data_pkg_num_ + redundant_pkg_num_) * sizeof(char *));
         for (int32_t i = 0; i < data_pkg_num_ + redundant_pkg_num_; ++i) {
+            ///注意这里必须要为每个数据包重新分配更大的空间,否则空间不够的情况下有些编码的数据会丢失
             data[i] = (char *) malloc((max_data_pkg_length_ + fec_encode_head_length_ + 1) *
                 sizeof(char));
             bzero(data[i], (max_data_pkg_length_ + fec_encode_head_length_ + 1) * sizeof(char));
@@ -61,7 +62,6 @@ int32_t FecEncode::Input(char *input_data_pkg, int32_t length) {
                 memcpy(data[i], data_pkgs_[i], data_pkgs_length_[i]);
                 free(data_pkgs_[i]);
                 data_pkgs_[i] = nullptr;
-//                data[i] = data_pkgs_[i];
             } else {
                 write_u32(data[i], seq);
                 data[i][4] = (unsigned char) data_pkg_num_;
@@ -73,10 +73,10 @@ int32_t FecEncode::Input(char *input_data_pkg, int32_t length) {
         }
         rs_encode2(data_pkg_num_, data_pkg_num_ + redundant_pkg_num_, data, max_data_pkg_length_);
         for (int32_t i = 0; i < data_pkg_num_ + redundant_pkg_num_; ++i) {
-            printf("after encode data[%d]:%s data size:%d\n", i, data[i], strlen(data[i]));
             data[i] -= fec_encode_head_length_;
             data_pkgs_[i] = data[i];
         }
+        ///注意这里修改了所有的数据包长度都为最大长度,因为从原理的角度来看本来生成的冗余数据长度都应该是相同的,并且是最大长度
         for (int32_t i = 0; i < data_pkg_num_ + redundant_pkg_num_; ++i) {
             data_pkgs_length_[i] = max_data_pkg_length_ + fec_encode_head_length_;
         }
