@@ -17,8 +17,9 @@ int32_t FecDecode::Input(char *input_data_pkg, int32_t length) {
     auto data_pkg_num = static_cast<int32_t>(input_data_pkg[4]);
     auto redundant_pkg_num = static_cast<int32_t>(input_data_pkg[5]);
     auto index = static_cast<int32_t>(input_data_pkg[6]);
-    if (index >= (data_pkg_num + redundant_pkg_num))
+    if (index == 0 || index > (data_pkg_num + redundant_pkg_num))
         return -1;
+    index--;
     length -= fec_encode_head_length_;
     ///下面这种情况说明实际上对应seq的所有数据已经解码完成同时已经被输出过了,所以直接返回0就好
     if (seq2data_pkgs_.count(seq))
@@ -28,7 +29,8 @@ int32_t FecDecode::Input(char *input_data_pkg, int32_t length) {
         return 1;
     char *data = (char *) malloc((length + 1));
     bzero(data, (length + 1));
-    memcpy(data, input_data_pkg + fec_encode_head_length_, length);
+    memcpy(data, input_data_pkg + fec_encode_head_length_, length+1);
+    printf("length:%d\n", length);
     std::lock_guard<std::mutex> lck(seq_mutex_);
     seq2data_pkgs_num_[seq] = data_pkg_num;
     seq2redundant_data_pkgs_num_[seq] = redundant_pkg_num;
@@ -41,8 +43,10 @@ int32_t FecDecode::Input(char *input_data_pkg, int32_t length) {
     ///防止有重复的包出现
     if (seq2data_pkgs_[seq][index] == nullptr)
         seq2data_pkgs_[seq][index] = data;
-    else
+    else {
         free(data);
+        return 0;
+    }
     seq2data_pkgs_length_[seq][index] = length;
     ++seq2cur_recv_data_pkg_num_[seq];
     if (seq2cur_recv_data_pkg_num_[seq] >= seq2data_pkgs_num_[seq]) {
@@ -52,13 +56,19 @@ int32_t FecDecode::Input(char *input_data_pkg, int32_t length) {
             redundant_pkg_num) * sizeof(char *));
         for (int32_t i = 0; i < data_pkg_num + redundant_pkg_num; ++i) {
             wait_decode_data[i] = seq2data_pkgs_[seq][i];
+            if (wait_decode_data[i])
+                print_char_array_in_byte(wait_decode_data[i]);
         }
         int32_t ret = rs_decode2(data_pkg_num, data_pkg_num + redundant_pkg_num, wait_decode_data,
                                  seq2max_data_pkg_length_[seq]);
+        printf("%d %d %d\n", data_pkg_num, data_pkg_num+redundant_pkg_num, seq2max_data_pkg_length_[seq]);
         if (ret < 0)
             return -1;
+        printf("After decode\n");
         for (int32_t i = 0; i < data_pkg_num + redundant_pkg_num; ++i) {
             seq2data_pkgs_[seq][i] = wait_decode_data[i];
+            if (wait_decode_data[i])
+                print_char_array_in_byte(wait_decode_data[i]);
             if (seq2data_pkgs_length_[seq][i] == 0)
                 seq2data_pkgs_length_[seq][i] = seq2max_data_pkg_length_[seq];
         }
@@ -67,6 +77,7 @@ int32_t FecDecode::Input(char *input_data_pkg, int32_t length) {
         seq2data_pkgs_length_[seq].erase(std::begin(seq2data_pkgs_length_[seq]) + data_pkg_num,
                                          std::end(seq2data_pkgs_length_[seq]));
         ///解码完成
+        free(wait_decode_data);
         seq2ready_for_output_[seq] = true;
         ready_seqs_nums_++;
         return 1;
