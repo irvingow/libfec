@@ -38,7 +38,8 @@ int main(int argc, char *argv[]) {
             perror("recvfrom error");
             break;
         }
-        auto ret = fec_decoder.Input(buf, strlen(buf));
+        printf("recv data len:%d\n", len);
+        auto ret = fec_decoder.Input(buf, len);
         if (ret == 1) {
             std::vector<char *> data_pkgs;
             std::vector<int32_t> data_pkgs_length;
@@ -47,8 +48,6 @@ int main(int argc, char *argv[]) {
                 perror("failed to get decoded data from fec_decoder");
                 break;
             }
-            printf("data_pkgs size:%d, data_pkgs_length size:%d\n",
-                data_pkgs.size(), data_pkgs_length.size());
             for (int i = 0; i < data_pkgs.size(); ++i) {
                 bzero(buf, sizeof(buf));
                 memcpy(buf, data_pkgs[i], data_pkgs_length[i]);

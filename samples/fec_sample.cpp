@@ -10,8 +10,8 @@ int unit_test() {
     int i;
     char arr[15][100] =
         {
-            "origin 01", "origin 02", "origin 03", "origin 04", "origin 05",
-            "origin 06", "origin 07", "origin 08", "origin 09", "origin 10",
+            "fhbweohfowehfowehf9023u905487odwusfios", "fdskjfhkasdhfkasdjfh92wfjoise", "fdshkjfhksajdhfaksjd", "fdshjkfhak",
+            "origin 05", "origin 06", "origin 07", "origin 08", "origin 09", "origin 10",
             "origin 11", "origin 12", "origin 13", "origin 14", "origin 15",
         };
     printf("--------origin data start------------\n");
@@ -22,7 +22,7 @@ int unit_test() {
 
     int ret = 0;
     for (int index = 0; index < 15; ++index) {
-        ret = fec_encode.Input(arr[index], 9);
+        ret = fec_encode.Input(arr[index], strlen(arr[index]));
         if (ret == 1) {
             LOG(INFO) << "fec_encode input ret success index:" << index;
             break;
@@ -49,6 +49,10 @@ int unit_test() {
         bzero(data[i], (res_length[i] + 1) * sizeof(char));
         memcpy(data[i], res[i], res_length[i]);
     }
+    for(const auto length : res_length){
+        printf("length:%d ", length);
+    }
+    printf("\n");
     printf("@@@@@@@@trans data start@@@@@@@@@@@@\n");
     free(data[0]);
     data[0] = nullptr;
@@ -58,8 +62,10 @@ int unit_test() {
     data[2] = nullptr;
     free(data[10]);
     data[10] = nullptr;
+    free(data[12]);
+    data[12] = nullptr;
     for (i = 0; i < 15; i++) {
-        if (data[i] == nullptr){
+        if (data[i] == nullptr) {
             printf("<nullptr>\n");
             continue;
         }
@@ -68,29 +74,44 @@ int unit_test() {
     }
     printf("@@@@@@@@trans data end@@@@@@@@@@@@@\n");
 
-    FecDecode fec_decoder(2000);
-    for(int32_t i =0;  i < 15; ++i){
-        if(data[i] == nullptr)
+    for (int i = 0; i < 15; ++i) {
+        if (data[i] != nullptr)
+            data[i] += 7;
+    }
+    rs_decode2(10,15,data, 38);
+    for (i = 0; i < 15; i++) {
+        if (data[i] == nullptr) {
+            printf("<nullptr>\n");
             continue;
-        ret = fec_decoder.Input(data[i], 16);
-        if(ret == 1){
-            LOG(INFO)<<"data pkg number is enough for output i:"<<i;
+        }
+        printf("<%s>\n", data[i]);
+    }
+    return 0;
+
+    FecDecode fec_decoder(2000);
+    for (int32_t i = 0; i < 15; ++i) {
+        if (data[i] == nullptr)
+            continue;
+        ret = fec_decoder.Input(data[i], strlen(data[i]));
+        LOG(INFO) << "Input data to fec_decoder index:" << i << " length:" << strlen(data[i]);
+        if (ret == 1) {
+            LOG(INFO) << "data pkg number is enough for output i:" << i;
         }
     }
 
-    std::vector<char*> decode_data_pkgs;
-    std::vector<int32_t > decode_data_pkgs_length;
+    std::vector<char *> decode_data_pkgs;
+    std::vector<int32_t> decode_data_pkgs_length;
     ret = fec_decoder.Output(decode_data_pkgs, decode_data_pkgs_length);
-    if(ret < 0){
-        LOG(ERROR)<<"cannot get decoded data";
+    if (ret < 0) {
+        LOG(ERROR) << "cannot get decoded data";
         return -1;
     }
-    if(ret > 0){
-        LOG(INFO)<<"more decoded data is ready for output in decoder ret:"<<ret;
+    if (ret > 0) {
+        LOG(INFO) << "more decoded data is ready for output in decoder ret:" << ret;
     }
-    for(i = 0; i < 15; ++i){
+    for (i = 0; i < 15; ++i) {
         free(data[i]);
-        if(i < 10){
+        if (i < 10) {
             data[i] = (char *) malloc((decode_data_pkgs_length[i] + 1) * sizeof(char));
             bzero(data[i], (decode_data_pkgs_length[i] + 1) * sizeof(char));
             memcpy(data[i], decode_data_pkgs[i], decode_data_pkgs_length[i]);
