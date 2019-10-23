@@ -46,6 +46,21 @@
 #include <stdlib.h>
 #include <string.h>
 
+void print_char_array_in_byte(char *buf, int length, char *name) {
+    const int32_t size = sizeof(buf);
+    for (int32_t i = 0; i < length; i++) {
+//        if (i > 0)
+//            printf(":");
+//        int temp = (int)buf[i];
+//        printf("%s_index%d:%ud\n", name,i,temp);
+        if(i != 0 && ((i % 5) == 0)){
+            printf("\n");
+        }
+        printf("%s_index%03d:%02X  ", name,i,(unsigned char)buf[i]);
+    }
+    printf("\n\n");
+}
+
 typedef unsigned long u_long;
 /*
  * compatibility stuff
