@@ -15,7 +15,7 @@ FecEncode::FecEncode(const int32_t &data_pkg_num, const int32_t &redundant_pkg_n
       data_pkg_num_(data_pkg_num),
       redundant_pkg_num_(redundant_pkg_num) {
     RandomNumberGenerator *rg = RandomNumberGenerator::GetInstance();
-    auto ret = rg->GetRandomNumber(seq);
+    auto ret = rg->GetRandomNumberU32(seq);
     if (ret < 0) {
         seq = 0;
     }
