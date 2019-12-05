@@ -15,7 +15,7 @@
 int main(int argc, char *argv[]) {
     int server_sockfd = -1;
     struct sockaddr_in my_addr;
-    char buf[128] = {0};
+    char buf[2048] = {0};
     my_addr.sin_family = AF_INET;
     my_addr.sin_addr.s_addr = INADDR_ANY;
     my_addr.sin_port = htons(8000);
@@ -34,7 +34,7 @@ int main(int argc, char *argv[]) {
     while (true) {
         bzero(buf, sizeof(buf));
         int len = -1;
-        if ((len = recvfrom(server_sockfd, buf, 128, 0, 0, 0)) < 0) {
+        if ((len = recvfrom(server_sockfd, buf, sizeof(buf), 0, 0, 0)) < 0) {
             perror("recvfrom error");
             break;
         }
@@ -51,7 +51,7 @@ int main(int argc, char *argv[]) {
             for (int i = 0; i < data_pkgs.size(); ++i) {
                 bzero(buf, sizeof(buf));
                 memcpy(buf, data_pkgs[i], data_pkgs_length[i]);
-                printf("%s\n", buf);
+                printf("data len:%d %.*s\n", data_pkgs_length[i], data_pkgs_length[i], buf);
             }
         }
     }

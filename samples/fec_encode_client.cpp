@@ -15,7 +15,7 @@
 int main(int argc, char *argv[]) {
     int client_sockfd = -1;
     struct sockaddr_in remote_addr;
-    char buf[128] = {0}, send_buf[128] = {0};
+    char buf[2048] = {0}, send_buf[2048] = {0};
     remote_addr.sin_family = AF_INET;
     remote_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
     remote_addr.sin_port = htons(8000);
@@ -33,7 +33,8 @@ int main(int argc, char *argv[]) {
         if (!strcmp(buf, "quit")) {
             break;
         }
-        auto ret = fec_encoder.Input(buf, strlen(buf));
+        auto len = strlen(buf);
+        auto ret = fec_encoder.Input(buf, len);
         if (ret == 1) {
             std::vector<char *> data_pkgs;
             std::vector<int32_t> data_pkgs_length;

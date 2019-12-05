@@ -27,7 +27,7 @@ FecEncode::~FecEncode() {
     ResetDataPkgs();
 }
 
-int32_t FecEncode::Input(char *input_data_pkg, int32_t length) {
+int32_t FecEncode::Input(const char *input_data_pkg, int32_t length) {
     std::lock_guard<std::mutex> lck(data_pkgs_mutex_);
     if (cur_data_pkgs_num_ == data_pkg_num_ || input_data_pkg == nullptr) {
         return -1;
