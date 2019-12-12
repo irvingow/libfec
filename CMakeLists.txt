@@ -7,9 +7,9 @@ SET(CMAKE_CXX_FLAGS_DEBUG "$ENV{CMAKE_CXX_FLAGS} -DDEBUG -O0 -Wall -g2 -ggdb")
 SET(CMAKE_CXX_FLAGS_RELEASE "$ENV{CMAKE_CXX_FLAGS} -O3")
 
 aux_source_directory(./source/ source_list)
-aux_source_directory(./lib/ lib_source_list)
+aux_source_directory(./lib/source/ lib_source_list)
 
-include_directories(./lib)
+include_directories(./lib/include)
 include_directories(./include)
 include_directories(/home/lwj/Documents/installed/boost/include/)
 
