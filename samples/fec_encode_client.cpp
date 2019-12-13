@@ -26,6 +26,7 @@ int main(int argc, char *argv[]) {
     }
     int socklen = sizeof(struct sockaddr);
     FecEncode fec_encoder(4, 2);
+    int cnt = 0;
     while (true) {
         printf("Enter string to send:");
         bzero(buf, sizeof(buf));
@@ -35,6 +36,21 @@ int main(int argc, char *argv[]) {
         }
         auto len = strlen(buf);
         auto ret = fec_encoder.Input(buf, len);
+        if(ret < 0){
+            printf("failed to call fec_encoder input\n");
+        }
+        ++cnt;
+        if(cnt == 3){
+            std::vector<char *> data_pkgs;
+            std::vector<int32_t> data_pkgs_length;
+            ret = fec_encoder.FlushUnEncodedData(data_pkgs, data_pkgs_length);
+            if(ret < 0){
+                printf("failed to call FlushUnEncodedData\n");
+            }
+            for(auto pkg : data_pkgs){
+                printf("flush unencoded data:%s\n", pkg);
+            }
+        }
         if (ret == 1) {
             std::vector<char *> data_pkgs;
             std::vector<int32_t> data_pkgs_length;
