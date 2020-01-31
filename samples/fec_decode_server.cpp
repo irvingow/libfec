@@ -20,7 +20,7 @@ int main(int argc, char *argv[]) {
     my_addr.sin_addr.s_addr = INADDR_ANY;
     my_addr.sin_port = htons(8000);
 
-    if ((server_sockfd = socket(PF_INET, SOCK_DGRAM, 0)) < 0) {
+    if ((server_sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
         perror("socket error");
         return -1;
     }
@@ -40,19 +40,19 @@ int main(int argc, char *argv[]) {
         }
         printf("recv data len:%d\n", len);
         auto ret = fec_decoder.Input(buf, len);
-        if (ret == 1) {
-            std::vector<char *> data_pkgs;
-            std::vector<int32_t> data_pkgs_length;
-            ret = fec_decoder.Output(data_pkgs, data_pkgs_length);
+        while (ret > 0) {
+            char *recv_buf = (char *)malloc(ret + 1);
+            bzero(recv_buf, ret+1);
+            ret = fec_decoder.Output(recv_buf, ret);
             if (ret < 0) {
                 perror("failed to get decoded data from fec_decoder");
                 break;
             }
-            for (int i = 0; i < data_pkgs.size(); ++i) {
-                bzero(buf, sizeof(buf));
-                memcpy(buf, data_pkgs[i], data_pkgs_length[i]);
-                printf("data len:%d %.*s\n", data_pkgs_length[i], data_pkgs_length[i], buf);
-            }
+            printf("data len:%d content:%s\n", len, recv_buf);
+            free(recv_buf);
+        }
+        if(ret < 0){
+            printf("error ret:%d\n", ret);
         }
     }
     return 0;

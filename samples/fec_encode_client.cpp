@@ -2,7 +2,7 @@
 // Created by lwj on 2019/10/17.
 //
 
-#include <stdio.h>
+#include <cstdio>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -39,18 +39,18 @@ int main(int argc, char *argv[]) {
         if(ret < 0){
             printf("failed to call fec_encoder input\n");
         }
-        ++cnt;
-        if(cnt == 3){
-            std::vector<char *> data_pkgs;
-            std::vector<int32_t> data_pkgs_length;
-            ret = fec_encoder.FlushUnEncodedData(data_pkgs, data_pkgs_length);
-            if(ret < 0){
-                printf("failed to call FlushUnEncodedData\n");
-            }
-            for(auto pkg : data_pkgs){
-                printf("flush unencoded data:%s\n", pkg);
-            }
-        }
+//        ++cnt;
+//        if(cnt == 3){
+//            std::vector<char *> data_pkgs;
+//            std::vector<int32_t> data_pkgs_length;
+//            ret = fec_encoder.FlushUnEncodedData(data_pkgs, data_pkgs_length);
+//            if(ret < 0){
+//                printf("failed to call FlushUnEncodedData\n");
+//            }
+//            for(auto pkg : data_pkgs){
+//                printf("flush unencoded data:%s\n", pkg);
+//            }
+//        }
         if (ret == 1) {
             std::vector<char *> data_pkgs;
             std::vector<int32_t> data_pkgs_length;
@@ -65,7 +65,7 @@ int main(int argc, char *argv[]) {
                     continue;
                 bzero(send_buf, sizeof(send_buf));
                 memcpy(send_buf, data_pkgs[i], data_pkgs_length[i]);
-                printf("send_buf:%s length:%d\n", send_buf, data_pkgs_length[i]);
+                printf("send_buf:%s length:%d\n", send_buf + 11, data_pkgs_length[i]);
                 ret = sendto(client_sockfd, send_buf, data_pkgs_length[i], 0, (struct sockaddr *) &remote_addr,
                              socklen);
                 if (ret < 0) {

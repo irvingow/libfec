@@ -35,7 +35,8 @@ class FecEncode{
   int32_t data_pkg_num_;
   int32_t redundant_pkg_num_;
   uint16_t seq;
-  const int32_t fec_encode_head_length_ = 7;
+  const int32_t fec_encode_head_length_ = 11;
+  const uint32_t unique_header_ = 0x12345678;
 };
 
 #endif //LIBFEC_FEC_ENCODE_H

@@ -7,6 +7,7 @@
 
 int unit_test() {
     FecEncode fec_encode(10, 5);
+    const int32_t fec_encode_header_len = 11;
     int i;
     char arr[15][100] =
         {
@@ -38,8 +39,8 @@ int unit_test() {
 //    rs_encode2(10, 15, data, 9);
     printf("++++++++encoded data start++++++++++++\n");
     for (i = 0; i < 15; i++) {
-        ///加7是为了跳过fec所加的包头
-        printf("<%s>\n", res[i] + 7);
+        ///加11是为了跳过fec所加的包头
+        printf("<%s>\n", res[i] + fec_encode_header_len);
     }
     printf("++++++++encoded data end++++++++++++\n");
 
@@ -69,14 +70,15 @@ int unit_test() {
             printf("<nullptr>\n");
             continue;
         }
-        ///加7是为了跳过fec所加的包头
-        printf("<%s>\n", data[i] + 7);
+        ///加11是为了跳过fec所加的包头
+        printf("<%s>\n", data[i] + fec_encode_header_len);
     }
     printf("@@@@@@@@trans data end@@@@@@@@@@@@@\n");
 
     for (int i = 0; i < 15; ++i) {
         if (data[i] != nullptr)
-            data[i] += 7;
+            ///加11是为了跳过fec所加的包头
+            data[i] += fec_encode_header_len;
     }
     rs_decode2(10,15,data, 38);
     for (i = 0; i < 15; i++) {
@@ -88,6 +90,7 @@ int unit_test() {
     }
     return 0;
 
+    /*
     FecDecode fec_decoder(2000);
     for (int32_t i = 0; i < 15; ++i) {
         if (data[i] == nullptr)
@@ -131,6 +134,7 @@ int unit_test() {
     }
     printf("########decoder data end##########\n");
     return 0;
+    */
 }
 
 int main(int argc, const char *argv[]) {

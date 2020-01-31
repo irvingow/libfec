@@ -48,12 +48,13 @@ int32_t FecEncode::Input(const char *input_data_pkg, int32_t length) {
     data_pkgs_[cur_data_pkgs_num_] = (char *) malloc((length + 1) * sizeof(char));
     data_pkgs_length_[cur_data_pkgs_num_] = length;
     bzero(data_pkgs_[cur_data_pkgs_num_], length + 1);
-    write_u16(data_pkgs_[cur_data_pkgs_num_], seq);
-    write_u16(data_pkgs_[cur_data_pkgs_num_] + 2, length - fec_encode_head_length_);
-    data_pkgs_[cur_data_pkgs_num_][4] = (unsigned char) data_pkg_num_;
-    data_pkgs_[cur_data_pkgs_num_][5] = (unsigned char) redundant_pkg_num_;
+    write_u32(data_pkgs_[cur_data_pkgs_num_], unique_header_);
+    write_u16(data_pkgs_[cur_data_pkgs_num_] + 4, seq);
+    write_u16(data_pkgs_[cur_data_pkgs_num_] + 6, length - fec_encode_head_length_);
+    data_pkgs_[cur_data_pkgs_num_][8] = (unsigned char) data_pkg_num_;
+    data_pkgs_[cur_data_pkgs_num_][9] = (unsigned char) redundant_pkg_num_;
     ///注意这里索引不能用0,用0的话可能导致在不注意的情况下字符串数据被截断,也就是将0作为结束的标志了,所以改成从1开始
-    data_pkgs_[cur_data_pkgs_num_][6] = (unsigned char) (cur_data_pkgs_num_ + 1);
+    data_pkgs_[cur_data_pkgs_num_][10] = (unsigned char) (cur_data_pkgs_num_ + 1);
     memcpy(data_pkgs_[cur_data_pkgs_num_] + fec_encode_head_length_, input_data_pkg, length - fec_encode_head_length_);
     cur_data_pkgs_num_++;
     if (cur_data_pkgs_num_ == data_pkg_num_) {
@@ -69,12 +70,13 @@ int32_t FecEncode::Input(const char *input_data_pkg, int32_t length) {
                 free(data_pkgs_[i]);
                 data_pkgs_[i] = nullptr;
             } else {
-                write_u16(data[i], seq);
-                write_u16(data[i] + 2, max_data_pkg_length_);
-                data[i][4] = (unsigned char) data_pkg_num_;
-                data[i][5] = (unsigned char) redundant_pkg_num_;
+                write_u32(data[i], unique_header_);
+                write_u16(data[i]+4, seq);
+                write_u16(data[i] + 6, max_data_pkg_length_);
+                data[i][8] = (unsigned char) data_pkg_num_;
+                data[i][9] = (unsigned char) redundant_pkg_num_;
             }
-            data[i][6] = (unsigned char) (i + 1);
+            data[i][10] = (unsigned char) (i + 1);
             ///因为实际上我们添加的fec头部是不进入fec编码的
             data[i] += fec_encode_head_length_;
         }
