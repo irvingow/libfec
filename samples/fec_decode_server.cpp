@@ -14,7 +14,7 @@
 
 int main(int argc, char *argv[]) {
     int server_sockfd = -1;
-    struct sockaddr_in my_addr;
+    struct sockaddr_in my_addr = {0};
     char buf[2048] = {0};
     my_addr.sin_family = AF_INET;
     my_addr.sin_addr.s_addr = INADDR_ANY;

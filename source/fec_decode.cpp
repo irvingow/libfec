@@ -197,9 +197,9 @@ void FecDecode::ClearTimeoutDatas() {
 }
 
 void FecDecode::RemoveSeqRespondData(const uint32_t &seq) {
-    for (char *pkg : seq2data_pkgs_[seq]) {
-        free(pkg);
-        pkg = nullptr;
+    for(int i = 0; i < seq2data_pkgs_[seq].size(); ++i){
+        free(seq2data_pkgs_[seq][i]);
+        seq2data_pkgs_[seq][i] = nullptr;
     }
     seq2data_pkgs_num_.erase(seq);
     seq2redundant_data_pkgs_num_.erase(seq);

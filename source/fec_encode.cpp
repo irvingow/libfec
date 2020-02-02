@@ -26,6 +26,10 @@ FecEncode::FecEncode(const int32_t &data_pkg_num, const int32_t &redundant_pkg_n
         seq = 1;
     data_pkgs_length_.resize(data_pkg_num + redundant_pkg_num);
     data_pkgs_.resize(data_pkg_num + redundant_pkg_num);
+    for (auto &data_pkg_length : data_pkgs_length_)
+        data_pkg_length = 0;
+    for (int i = 0; i < data_pkgs_.size(); ++i)
+        data_pkgs_[i] = nullptr;
 }
 
 FecEncode::~FecEncode() {
@@ -147,9 +151,9 @@ int32_t FecEncode::FlushUnEncodedData(std::vector<char *> &data_pkgs, std::vecto
 void FecEncode::ResetDataPkgs() {
     for (auto &data_pkg_length : data_pkgs_length_)
         data_pkg_length = 0;
-    for (char *data_pkg : data_pkgs_) {
-        free(data_pkg);
-        data_pkg = nullptr;
+    for (int i = 0; i < data_pkgs_.size(); ++i) {
+        free(data_pkgs_[i]);
+        data_pkgs_[i] = nullptr;
     }
 }
 
