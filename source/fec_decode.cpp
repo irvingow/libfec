@@ -36,11 +36,13 @@ FecDecode::~FecDecode() {
 };
 
 int32_t FecDecode::Input(char *input_data_pkg, int32_t length) {
-    if (length <= fec_encode_head_length_ || input_data_pkg == nullptr)
+    if (length < sizeof(unique_header_) || input_data_pkg == nullptr)
         return -1;
     uint32_t unique_header = read_u32(input_data_pkg);
     if (unique_header != unique_header_)
         return DealUnEncodeData(input_data_pkg, length);
+    if(length < fec_encode_head_length_)
+        return -1;
     uint16_t seq = read_u16(input_data_pkg + 4);
     uint16_t package_length = read_u16(input_data_pkg + 6);
     auto data_pkg_num = static_cast<int32_t>(input_data_pkg[8]);
@@ -133,6 +135,12 @@ int32_t FecDecode::Output(char *recv_buf, int32_t length) {
             memcpy(recv_buf, output_unit_.data, output_unit_.actural_len);
             output_unit_.actural_len = 0;
             output_unit_.ready_for_output = false;
+            auto ret = SearchForNextReadySeq(INT32_MAX);
+            if(ret <= 0)
+                return ret;
+            output_unit_.last_process_seq = ret;
+            output_unit_.last_process_index = 0;
+            return seq2data_pkgs_length_[ret][0];
         }
     }
     if (ready_seqs_nums_ == 0) {

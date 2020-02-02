@@ -8,19 +8,21 @@
 #include "random_generator.h"
 #include "common.h"
 
-FecEncode::FecEncode(const int32_t &data_pkg_num, const int32_t &redundant_pkg_num)
-    : cur_data_pkgs_num_(0),
+FecEncode::FecEncode(const int32_t &data_pkg_num, const int32_t &redundant_pkg_num, const uint32_t &timeout)
+    : inside_timer_(0),
+      cur_data_pkgs_num_(0),
       max_data_pkg_length_(0),
       ready_for_fec_output_(false),
       data_pkg_num_(data_pkg_num),
-      redundant_pkg_num_(redundant_pkg_num) {
+      redundant_pkg_num_(redundant_pkg_num),
+      timeout_time_(timeout) {
     RandomNumberGenerator *rg = RandomNumberGenerator::GetInstance();
     auto ret = rg->GetRandomNumberU16(seq);
     if (ret < 0) {
         seq = 1;
     }
     ///65521 is the max primer number in the range of 0-65535
-    if(seq >= 65521)
+    if (seq >= 65521)
         seq = 1;
     data_pkgs_length_.resize(data_pkg_num + redundant_pkg_num);
     data_pkgs_.resize(data_pkg_num + redundant_pkg_num);
@@ -32,10 +34,12 @@ FecEncode::~FecEncode() {
 }
 
 int32_t FecEncode::Input(const char *input_data_pkg, int32_t length) {
+    uint64_t time_temp = inside_timer_;
+    newest_update_time_ = time_temp;
     std::lock_guard<std::mutex> lck(data_pkgs_mutex_);
-    if (cur_data_pkgs_num_ == data_pkg_num_ )
+    if (cur_data_pkgs_num_ == data_pkg_num_)
         return -1;
-    if(input_data_pkg == nullptr || length <= 0 || length > 65535)
+    if (input_data_pkg == nullptr || length <= 0 || length > 65535)
         return -2;
     if (cur_data_pkgs_num_ == 0) {
         ready_for_fec_output_ = false;
@@ -71,7 +75,7 @@ int32_t FecEncode::Input(const char *input_data_pkg, int32_t length) {
                 data_pkgs_[i] = nullptr;
             } else {
                 write_u32(data[i], unique_header_);
-                write_u16(data[i]+4, seq);
+                write_u16(data[i] + 4, seq);
                 write_u16(data[i] + 6, max_data_pkg_length_);
                 data[i][8] = (unsigned char) data_pkg_num_;
                 data[i][9] = (unsigned char) redundant_pkg_num_;
@@ -85,7 +89,6 @@ int32_t FecEncode::Input(const char *input_data_pkg, int32_t length) {
             data[i] -= fec_encode_head_length_;
             data_pkgs_[i] = data[i];
         }
-        ///注意这里修改了所有的数据包长度都为最大长度,因为从原理的角度来看本来生成的冗余数据长度都应该是相同的,并且是最大长度
         for (int32_t i = 0; i < data_pkg_num_ + redundant_pkg_num_; ++i) {
             data_pkgs_length_[i] = max_data_pkg_length_ + fec_encode_head_length_;
         }
@@ -93,7 +96,7 @@ int32_t FecEncode::Input(const char *input_data_pkg, int32_t length) {
         ready_for_fec_output_ = true;
         seq++;
         ///65521 is the max prime number smaller than the max number in uint16_t
-        if(seq >= 65521)
+        if (seq >= 65521)
             seq = 1;
         return 1;
     }
@@ -111,15 +114,31 @@ int32_t FecEncode::Output(std::vector<char *> &data_pkgs, std::vector<int32_t> &
     return 0;
 }
 
-int32_t FecEncode::FlushUnEncodedData(std::vector<char *> & data_pkgs, std::vector<int32_t> & data_pkgs_length) {
+int32_t FecEncode::FecEncodeUpdateTime(const uint64_t &cur_millsec) {
+    if (inside_timer_ == 0) {
+        newest_update_time_ = inside_timer_ = cur_millsec;
+        return 0;
+    }
+    if (cur_millsec < inside_timer_)
+        return -1;
+    inside_timer_ = cur_millsec;
+    if ((cur_millsec - newest_update_time_) < (timeout_time_ * 1000))
+        return 0;
+    ///means we have waited for the next data package for longer time than timeout
+    return 1;
+}
+
+int32_t FecEncode::FlushUnEncodedData(std::vector<char *> &data_pkgs, std::vector<int32_t> &data_pkgs_length) {
     std::lock_guard<std::mutex> lck(data_pkgs_mutex_);
-    if(cur_data_pkgs_num_ == data_pkg_num_)
+    if (cur_data_pkgs_num_ == data_pkg_num_)
         return -1;
     data_pkgs.resize(cur_data_pkgs_num_);
     data_pkgs_length.resize(cur_data_pkgs_num_);
-    for(int i = 0; i < cur_data_pkgs_num_; ++i){
-        data_pkgs[i] = data_pkgs_[i] + fec_encode_head_length_;
-        data_pkgs_length[i] = data_pkgs_length_[i] - fec_encode_head_length_;
+    for (int i = 0; i < cur_data_pkgs_num_; ++i) {
+        data_pkgs[i] = data_pkgs_[i] + fec_encode_head_length_ - sizeof(unique_header_);
+        ///we just add reverse unique header before the head of unencoded data package
+        write_u32_r(data_pkgs[i], unique_header_);
+        data_pkgs_length[i] = data_pkgs_length_[i] - fec_encode_head_length_ + sizeof(unique_header_);
     }
     cur_data_pkgs_num_ = 0;
     return 0;

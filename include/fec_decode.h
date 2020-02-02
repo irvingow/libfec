@@ -7,7 +7,7 @@
 
 #include <cstdint>
 #include <vector>
-#include <string.h>
+#include <cstring>
 #include <atomic>
 #include <mutex>
 #include <map>

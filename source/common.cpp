@@ -51,9 +51,9 @@ uint16_t read_u16(const char * p)
 }
 
 int64_t getnowtime_ms(){
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    return tv.tv_sec + tv.tv_usec / 1000;
+    struct timeval tv = {0};
+    gettimeofday(&tv, nullptr);
+    return 1000 * tv.tv_sec + tv.tv_usec / 1000;
 }
 
 void print_char_array_in_byte(char *buf) {
