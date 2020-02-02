@@ -35,7 +35,7 @@ FecDecode::~FecDecode() {
     free(output_unit_.data);
 };
 
-int32_t FecDecode::Input(char *input_data_pkg, int32_t length) {
+int32_t FecDecode::Input(const char *input_data_pkg, int32_t length) {
     if (length < sizeof(unique_header_) || input_data_pkg == nullptr)
         return -1;
     uint32_t unique_header = read_u32(input_data_pkg);
@@ -113,7 +113,7 @@ int32_t FecDecode::Input(char *input_data_pkg, int32_t length) {
     return 0;
 }
 
-int32_t FecDecode::DealUnEncodeData(char *input_data_pkg, int32_t length) {
+int32_t FecDecode::DealUnEncodeData(const char *input_data_pkg, int32_t length) {
     if (input_data_pkg == nullptr || read_u32_r(input_data_pkg) != unique_header_)
         return -2;
     std::lock_guard<std::mutex> lck(output_unit_mutex_);

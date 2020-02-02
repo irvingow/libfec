@@ -38,7 +38,7 @@ class FecDecode {
    * package, you should call @func Output with a buffer of length @return
    * return -2 means input_data_pkg is a wrong data package
    */
-  int32_t Input(char *input_data_pkg, int32_t length);
+  int32_t Input(const char *input_data_pkg, int32_t length);
 
   /**
    * handle the issue when fec_encode send some unencoded data
@@ -49,7 +49,7 @@ class FecDecode {
    * data package, and @func Output is ready for output, you should call @func
    * Output with a buffer of length @return
    */
-  int32_t DealUnEncodeData(char *input_data_pkg, int32_t length);
+  int32_t DealUnEncodeData(const char *input_data_pkg, int32_t length);
   /**
    * @param data_pkgs 输出数据组的指针
    * @param length 对应每个输出数据的长度

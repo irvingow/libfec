@@ -20,5 +20,5 @@ file(GLOB_RECURSE mains RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_
 foreach(mainfile IN LISTS mains)
 #     Get file name without directory
     get_filename_component(mainname ${mainfile} NAME_WE)
-    add_executable(${mainname} ${mainfile} ${source_list} ${lib_source_list} )
+    add_executable(${mainname} ${mainfile} ${source_list} ${lib_source_list})
 endforeach()

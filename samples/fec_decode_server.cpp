@@ -46,6 +46,7 @@ int main(int argc, char *argv[]) {
             ret = fec_decoder.Output(recv_buf, ret);
             if (ret < 0) {
                 perror("failed to get decoded data from fec_decoder");
+                free(recv_buf);
                 break;
             }
             printf("data len:%d content:%s\n", len, recv_buf);

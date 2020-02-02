@@ -19,7 +19,7 @@ void write_u32_r(char * p,uint32_t l)
     *(unsigned char*)(p + 2) = (unsigned char)((l >> 16) & 0xff);
     *(unsigned char*)(p + 3) = (unsigned char)((l >> 24) & 0xff);
 }
-uint32_t read_u32(char * p)
+uint32_t read_u32(const char * p)
 {
     uint32_t res;
     res = *(const unsigned char*)(p + 0);
@@ -28,7 +28,7 @@ uint32_t read_u32(char * p)
     res = *(const unsigned char*)(p + 3) + (res << 8);
     return res;
 }
-uint32_t read_u32_r(char * p)
+uint32_t read_u32_r(const char * p)
 {
     uint32_t res;
     res = *(const unsigned char*)(p + 3);
@@ -56,7 +56,7 @@ int64_t getnowtime_ms(){
     return 1000 * tv.tv_sec + tv.tv_usec / 1000;
 }
 
-void print_char_array_in_byte(char *buf) {
+void print_char_array_in_byte(const char *buf) {
     const int32_t size = sizeof(buf);
     for (int32_t i = 0; i < strlen(buf); i++) {
         if (i > 0)
