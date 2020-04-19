@@ -4,16 +4,37 @@
 #include <glog/logging.h>
 #include "fec_encode.h"
 #include "fec_decode.h"
+#include <chrono>
+#include <algorithm>
+
+using std::chrono::high_resolution_clock;
+using std::chrono::microseconds ;
 
 int unit_test() {
     FecEncode fec_encode(10, 5);
     const int32_t fec_encode_header_len = 11;
-    int i;
-    char arr[15][100] =
+    int i, maxPackageLen = 0;
+    char arr[15][600] =
         {
-            "fhbweohfowehfowehf9023u905487odwusfios", "fdskjfhkasdhfkasdjfh92wfjoise", "fdshkjfhksajdhfaksjd", "fdshjkfhak",
+            "ffhbweohfowehfo38490hsiudahf8awe9hfsdwehf9023u905487odwusfioshbwkhjkxbkjcvbxczkjveveohfowehfowehf9023u905487odwusfios"
+            "ffhbweohfowehfo38490hsiudahf8awe9hfsdkhjkxbkj3u905487odwusfioscvbxczkjvevwehf902hbweohfowehfowehf9023u905487odwusfios"
+            "ffhbweohfowehfo38490hsiudahf8awe9hfsdkhjkxbkjcvbxczkjvevwehf9023u905487odwusfioshbweohfowehfowehf9023u905487odwusfios"
+            "ffhbweohfowehfo38490hsiudahf8awe9hfsdkhjkxbkjcvbxczkjvevwehf9023u905487odwusfioshbweohfowehfowehf9023u905487odwusfios"
+            "fsdjhfksjdjkskjnjcxznvwio320urjngdakdsf4s5d3f4r5te8g4564a5weru82fjfmclkasdjfaksdhfaslkjfhwilufh1308hr73hrrfkjsdnfkjd",
+            "ffhbweohfowehfo38490hs7odwusfioshbweohfowehfowehfiudahf8awe9hfsdkhjkxbkjcvbxczkjvevwehf9023u905489023u905487odwusfios"
+            "ffhbweohfowehfo3849xbkjcvbxczkjvevwehf9023u905487odwusfiosh0hsiudahf8awe9hfsdkhjkbweohfowehfowehf9023u905487odwusfios"
+            "ffhbweohfowehfo38490hsiudahf8awe9hfsdkhjkxbkjcvbxczkjvevwehf9023u905487odwusfioshbweohfowehfowehf9023u905487odwusfios"
+            "fsdjhfksjdjkskjnweru82fjfmclkasdjfaksdhfasljcxznvwio320urjngdakdsf4s5d3f4r5te8g4564a5kjfhwilufh1308hr73hrrfkjsdnfkjd",
+            "fdskjfhkasdhfhbweohfowehfowehf9023u905487odwusfiosfkasdjfh92wfjoise",
+            "fdsfhbweohfowehfowehf9023u905487odwusfioshfhbweohfowehfowehf9023u905487odwusfioskjfhksajdhfaksjd",
+            "ffhbweohfowehfo38490hsiudahf8awe9hfsdkhjkxbkjcvbxczkjvevwehf9023u905487odwusfioshbweohfowehfowehf9023u905487odwusfios"
+            "fsdjhfksjdjkskjnjcxznvwio320urjngdakdsf4s5d3f4r5te8g4564a5weru82fjfmclkasdjfaksdhfaslkjfhwilufh1308hr73hrrfkjsdnfkjd",
+            "fdshjkfhak",
+            "fsdjhfksjdjkskjnjcxznvwio320urjngdakdsf4s5d3f4r5te8g4564a5weru82fjfmclkasdjfaksdhfaslkjfhwilufh1308hr73hrrfkjsdnfkjd",
+            "fsdjhfksjdjkskjnjcxznvwio320urjngdakdsf4s5d3f4r5te8g4564a5weru82fjfmclkasdjfaksdhfaslkjfhwilufh1308hr73hrrfkjsdnfkjd",
+            "fsdjhfksjdjkskjnjcxznvwio320urjngdakdsf4s5d3f4r5te8g4564a5weru82fjfmclkasdjfaksdhfaslkjfhwilufh1308hr73hrrfkjsdnfkjd"
             "origin 05", "origin 06", "origin 07", "origin 08", "origin 09", "origin 10",
-            "origin 11", "origin 12", "origin 13", "origin 14", "origin 15",
+            "h24yu9t34yhiuadshbiuwe9ty2e8rhsafsga[]fdgdfgd4fe+f4sda6fwe8fsd6a4x4312vsdf4we64fwe8r32r443y454y4dsfdf6sda"
         };
     printf("--------origin data start------------\n");
     for (i = 0; i < 15; i++) {
@@ -22,13 +43,20 @@ int unit_test() {
     printf("--------origin data end------------\n");
 
     int ret = 0;
+    high_resolution_clock::time_point start = high_resolution_clock::now();
     for (int index = 0; index < 15; ++index) {
-        ret = fec_encode.Input(arr[index], strlen(arr[index]));
+        auto slen = strlen(arr[index]);
+        maxPackageLen = std::max(maxPackageLen, static_cast<int>(slen));
+        ret = fec_encode.Input(arr[index], slen);
+        printf("package#%d length:%d\n", i, slen);
         if (ret == 1) {
-            LOG(INFO) << "fec_encode input ret success index:" << index;
+//            LOG(INFO) << "fec_encode input ret success index:" << index;
             break;
         }
     }
+    high_resolution_clock::time_point  end = high_resolution_clock::now();
+    microseconds timeInterval = std::chrono::duration_cast<microseconds>(end - start);
+    printf("computation consumes %ld us\n", timeInterval.count());
     std::vector<char *> res;
     std::vector<int32_t> res_length;
     ret = fec_encode.Output(res, res_length);
@@ -37,12 +65,12 @@ int unit_test() {
         return -1;
     }
 //    rs_encode2(10, 15, data, 9);
-    printf("++++++++encoded data start++++++++++++\n");
-    for (i = 0; i < 15; i++) {
-        ///加11是为了跳过fec所加的包头
-        printf("<%s>\n", res[i] + fec_encode_header_len);
-    }
-    printf("++++++++encoded data end++++++++++++\n");
+//    printf("++++++++encoded data start++++++++++++\n");
+//    for (i = 0; i < 15; i++) {
+//        ///加11是为了跳过fec所加的包头
+//        printf("<%s>\n", res[i] + fec_encode_header_len);
+//    }
+//    printf("++++++++encoded data end++++++++++++\n");
 
     char *data[15];
     for (i = 0; i < 15; ++i) {
@@ -50,11 +78,11 @@ int unit_test() {
         bzero(data[i], (res_length[i] + 1) * sizeof(char));
         memcpy(data[i], res[i], res_length[i]);
     }
-    for(const auto length : res_length){
-        printf("length:%d ", length);
-    }
-    printf("\n");
-    printf("@@@@@@@@trans data start@@@@@@@@@@@@\n");
+//    for(const auto length : res_length){
+//        printf("length:%d ", length);
+//    }
+//    printf("\n");
+//    printf("@@@@@@@@trans data start@@@@@@@@@@@@\n");
     free(data[0]);
     data[0] = nullptr;
     free(data[1]);
@@ -65,23 +93,23 @@ int unit_test() {
     data[10] = nullptr;
     free(data[12]);
     data[12] = nullptr;
-    for (i = 0; i < 15; i++) {
-        if (data[i] == nullptr) {
-            printf("<nullptr>\n");
-            continue;
-        }
-        ///加11是为了跳过fec所加的包头
-        printf("<%s>\n", data[i] + fec_encode_header_len);
-    }
-    printf("@@@@@@@@trans data end@@@@@@@@@@@@@\n");
+//    for (i = 0; i < 15; i++) {
+//        if (data[i] == nullptr) {
+//            printf("<nullptr>\n");
+//            continue;
+//        }
+//        ///加11是为了跳过fec所加的包头
+//        printf("<%s>\n", data[i] + fec_encode_header_len);
+//    }
+//    printf("@@@@@@@@trans data end@@@@@@@@@@@@@\n");
 
     for (int i = 0; i < 15; ++i) {
         if (data[i] != nullptr)
             ///加11是为了跳过fec所加的包头
             data[i] += fec_encode_header_len;
     }
-    rs_decode2(10,15,data, 38);
-    for (i = 0; i < 15; i++) {
+    rs_decode2(10,15,data, maxPackageLen);
+    for (i = 0; i < 10; i++) {
         if (data[i] == nullptr) {
             printf("<nullptr>\n");
             continue;
